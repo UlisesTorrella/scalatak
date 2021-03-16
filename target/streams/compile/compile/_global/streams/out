@@ -1,0 +1,9 @@
+[0m[[0m[33mwarn[0m] [0m[0m/home/ulince/Data/Projects/Litak/lila/modules/chess/src/main/scala/variant/Horde.scala:28:21: match may not be exhaustive.[0m
+[0m[[0m[33mwarn[0m] [0m[0mIt would fail on the following input: Rank(_)[0m
+[0m[[0m[33mwarn[0m] [0m[0m      Pos(x, y) -> (y match {[0m
+[0m[[0m[33mwarn[0m] [0m[0m                    ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/home/ulince/Data/Projects/Litak/lila/modules/chess/src/main/scala/variant/Variant.scala:259:21: match may not be exhaustive.[0m
+[0m[[0m[33mwarn[0m] [0m[0mIt would fail on the following input: Rank(_)[0m
+[0m[[0m[33mwarn[0m] [0m[0m      Pos(x, y) -> (y match {[0m
+[0m[[0m[33mwarn[0m] [0m[0m                    ^[0m
+[0m[[0m[33mwarn[0m] [0m[0mtwo warnings found[0m
