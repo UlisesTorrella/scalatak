@@ -8,6 +8,8 @@ case class Rank private (val index: Int) extends AnyVal with Ordered[Rank] {
     if (-8 < delta && delta < 8) Rank(index + delta)
     else None
 
+  def up: Rank = new Rank(index + 1)
+
   @inline def char: Char = (49 + index).toChar
   override def toString  = char.toString
 }

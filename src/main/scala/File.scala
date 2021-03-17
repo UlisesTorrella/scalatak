@@ -11,6 +11,8 @@ case class File private (val index: Int) extends AnyVal with Ordered[File] {
   @inline def char: Char = (97 + index).toChar
   override def toString  = char.toString
 
+  def right: File = new File(index + 1)
+
   @inline def upperCaseChar: Char = (65 + index).toChar
   def toUpperCaseString           = upperCaseChar.toString
 }

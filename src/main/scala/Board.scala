@@ -153,6 +153,19 @@ case class Board(
   def emptySquares: List[Pos] =
     Pos.all diff pieces.keys.toSeq
 
+  def hasFlatStoneAt(pos: Pos, c: Color) =
+    (pieces contains pos) && (pieces(pos).role == Flatstone || pieces(pos).role == Capstone) && (pieces(pos).color == c)
+
+  def hasPath(color: Color): Boolean =
+    (Rank.all diff List(Rank.Eighth)).map {
+      r => pieces.view.filter {
+        case (pos, piece) => (((pos rank) == r) && (piece is color) && ((piece is Flatstone) || (piece is Capstone)))
+      }}.forall { _ exists { case (pos, piece) => hasFlatStoneAt(Pos(pos.file, pos.rank.up), piece.color) } }  ||
+    (File.all diff List(File.H)).map {
+      f => pieces.view.filter {
+        case (pos, piece) => (((pos file) == f) && (piece is color) && ((piece is Flatstone) || (piece is Capstone)))
+      }}.forall { _ exists { case (pos, piece) => hasFlatStoneAt(Pos(pos.file.right, pos.rank), piece.color) } }
+
   override def toString = s"$variant Position after ${history.lastMove}\n$visual"
 }
 

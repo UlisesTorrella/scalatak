@@ -17,9 +17,9 @@ case class Piece(color: Color, role: Role) {
   def eyes(from: Pos, to: Pos): Boolean =
     role match {
       case King   => from touches to
-      case Capstone   => from touches to
-      case Wallstone   => from touches to
-      case Flatstone   => from touches to
+      case Capstone => from touches to
+      case Wallstone => from touches to
+      case Flatstone => from touches to
       case Queen  => (from onSameLine to) || (from onSameDiagonal to)
       case Rook   => from onSameLine to
       case Bishop => from onSameDiagonal to

@@ -46,18 +46,21 @@ case object Crazyhouse
   override def finalizeBoard(board: Board, uci: Uci, capture: Option[Piece]): Board =
     board
 
+  // Checkmate here means a path has been stablished
+  override def checkmate(situation: Situation) = situation.board hasPath !situation.color
+
+
   def canDropStuff(situation: Situation): Option[List[Pos]] =
     situation.board.crazyData match {
       case Some(data) => if (data.pockets(situation.color).roles.nonEmpty) Some(situation.board.emptySquares) else None
       case None => None
     }
   override def staleMate(situation: Situation) = false
-  override def checkmate(situation: Situation) = false
   // there is always sufficient mating material in Crazyhouse
   override def opponentHasInsufficientMaterial(situation: Situation) = false
   override def isInsufficientMaterial(board: Board)                  = false
 
-  val storableRoles = List(Queen, Flatstone, Capstone, Wallstone)
+  val storableRoles = List(Flatstone, Capstone, Wallstone)
 
   case class Data(
       pockets: Pockets,

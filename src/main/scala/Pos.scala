@@ -41,6 +41,18 @@ case class Pos private (index: Int) extends AnyVal {
 
   def isLight: Boolean = (file.index + rank.index) % 2 == 1
 
+  def atBottom: Boolean = index < 8
+
+  def atTop: Boolean = index > 55
+
+  def atLeft: Boolean = index % 8 == 0
+
+  def atRight: Boolean = (index - 7) % 8 == 0
+
+  def isVerticalEnd: Boolean = atBottom || atTop
+
+  def isHorizontalEnd: Boolean = atLeft || atRight
+
   @inline def file = File of this
   @inline def rank = Rank of this
 
