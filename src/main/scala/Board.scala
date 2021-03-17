@@ -153,18 +153,28 @@ case class Board(
   def emptySquares: List[Pos] =
     Pos.all diff pieces.keys.toSeq
 
-  def hasFlatStoneAt(pos: Pos, c: Color) =
-    (pieces contains pos) && (pieces(pos).role == Flatstone || pieces(pos).role == Capstone) && (pieces(pos).color == c)
+  def hasPathstoneAt(pos: Pos, c: Color) =
+    if (pieces contains pos) pieces(pos).role match {
+      case _: Pathstone => (pieces(pos).color == c)
+      case _ => false
+    }
+    else false
 
   def hasPath(color: Color): Boolean =
-    (Rank.all diff List(Rank.Eighth)).map {
-      r => pieces.view.filter {
-        case (pos, piece) => (((pos rank) == r) && (piece is color) && ((piece is Flatstone) || (piece is Capstone)))
-      }}.forall { _ exists { case (pos, piece) => hasFlatStoneAt(Pos(pos.file, pos.rank.up), piece.color) } }  ||
-    (File.all diff List(File.H)).map {
-      f => pieces.view.filter {
-        case (pos, piece) => (((pos file) == f) && (piece is color) && ((piece is Flatstone) || (piece is Capstone)))
-      }}.forall { _ exists { case (pos, piece) => hasFlatStoneAt(Pos(pos.file.right, pos.rank), piece.color) } }
+    (pieces.view.filterKeys { pos => (pos rank) == Rank.First } exists { case (pos, _) => hasPathUpFrom(pos, color, Set[Pos]()) }) ||
+    (pieces.view.filterKeys { pos => (pos file) == File.A } exists { case (pos, _) => hasPathRightFrom(pos, color, Set[Pos]()) })
+
+  def hasPathUpFrom(pos: Pos, color: Color, visited: Set[Pos]): Boolean =
+    if (hasPathstoneAt(pos, color))
+      if (pos.rank == Rank.Eighth) true
+      else pos.takNeighboursUp filter { pos => !(visited contains pos) && hasPathstoneAt(pos, color) } exists { pos => hasPathUpFrom(pos, color, visited + pos) }
+    else false
+
+  def hasPathRightFrom(pos: Pos, color: Color, visited: Set[Pos]): Boolean =
+    if (hasPathstoneAt(pos, color))
+      if (pos.file == File.H) true
+      else pos.takNeighboursRight filter { pos => !(visited contains pos) && hasPathstoneAt(pos, color) } exists { pos => hasPathRightFrom(pos, color, visited + pos) }
+    else false
 
   override def toString = s"$variant Position after ${history.lastMove}\n$visual"
 }

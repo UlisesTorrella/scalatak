@@ -13,6 +13,10 @@ case class Pos private (index: Int) extends AnyVal {
   def upLeft: Option[Pos]    = Pos.at(file.index - 1, rank.index + 1)
   def upRight: Option[Pos]   = Pos.at(file.index + 1, rank.index + 1)
 
+  def takNeighboursUp: List[Pos] = List(up, right, left).flatten
+
+  def takNeighboursRight: List[Pos] = List(up, right, down).flatten
+
   def >|(stop: Pos => Boolean): List[Pos] = |<>|(stop, _.right)
   def |<(stop: Pos => Boolean): List[Pos] = |<>|(stop, _.left)
   def |<>|(stop: Pos => Boolean, dir: Direction): List[Pos] =
