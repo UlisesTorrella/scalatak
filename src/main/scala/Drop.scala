@@ -26,8 +26,7 @@ case class Drop(
           halfMoveClock = if (piece is Pawn) 0 else h.halfMoveClock + 1
         )
       },
-      toUci,
-      none
+      toUci
     )
 
     board updateHistory { h =>
@@ -40,8 +39,7 @@ case class Drop(
   def afterWithLastMove =
     after.variant.finalizeBoard(
       after.copy(history = after.history.withLastMove(toUci)),
-      toUci,
-      none
+      toUci
     )
 
   def color = piece.color

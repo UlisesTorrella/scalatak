@@ -1,6 +1,6 @@
 package chess
 package format.pgn
-
+import scala.collection.mutable.Stack
 import cats.data.Validated
 import cats.syntax.option._
 
@@ -59,7 +59,7 @@ case class Std(
 
   def move(situation: Situation): Validated[String, chess.Move] =
     situation.board.pieces.foldLeft(none[chess.Move]) {
-      case (None, (pos, piece))
+      case (None, (pos, Stack(piece, _*)))
           if piece.color == situation.color && piece.role == role && compare(
             file,
             pos.file.index + 1
@@ -68,8 +68,8 @@ case class Std(
             pos.rank.index + 1
           ) && piece.eyesMovable(pos, dest) =>
         val a = Actor(piece, pos, situation.board)
-        a trustedMoves false find { m =>
-          m.dest == dest && a.board.variant.kingSafety(a, m)
+        (a trustedMoves).find { m =>
+          m.dest == dest
         }
       case (m, _) => m
     } match {
@@ -122,23 +122,6 @@ case class Metas(
 
 object Metas {
   val empty = Metas(check = false, checkmate = false, Nil, Glyphs.empty, Nil)
-}
-
-case class Castle(
-    side: Side,
-    metas: Metas = Metas.empty
-) extends San {
-
-  def apply(situation: Situation) = move(situation) map Left.apply
-
-  def withMetas(m: Metas) = copy(metas = m)
-
-  def move(situation: Situation): Validated[String, chess.Move] =
-    for {
-      kingPos <- situation.board kingPosOf situation.color toValid "No king found"
-      actor   <- situation.board actorAt kingPos toValid "No actor found"
-      move    <- actor.castleOn(side).headOption toValid "Cannot castle / variant is " + situation.board.variant
-    } yield move
 }
 
 case class Suffixes(

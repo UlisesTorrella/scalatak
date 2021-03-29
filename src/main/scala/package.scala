@@ -1,4 +1,5 @@
 import ornicar.scalalib
+import scala.collection.mutable.Stack
 
 package object chess extends scalalib.Common with scalalib.OrnicarOption with scalalib.OrnicarBoolean {
 
@@ -8,7 +9,7 @@ package object chess extends scalalib.Common with scalalib.OrnicarOption with sc
   type Direction  = Pos => Option[Pos]
   type Directions = List[Direction]
 
-  type PieceMap = Map[Pos, Piece]
+  type PieceMap = Map[Pos, Stack[Piece]]
 
   type PositionHash = Array[Byte]
 

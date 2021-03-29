@@ -109,7 +109,7 @@ object Parser {
       }
 
     val moveRegex =
-      """(?:(?:0\-0(?:\-0|)[\+\#]?)|[PQKRBNOoa-h@][QKRBNa-h1-8xOo\-=\+\#\@]{1,6})[\?!□]{0,2}""".r
+      """(?:(?:0\-0(?:\-0|)[\+\#]?)|[PQKRBNFWCOoa-h@][QKRBNFWCa-h1-8xOo\-=\+\#\@]{1,6})[\?!□]{0,2}""".r
 
     def strMove: Parser[StrMove] =
       as("move") {
@@ -174,8 +174,8 @@ object Parser {
     private val fileMap                       = rangeToMap('a' to 'h')
     private val rankMap                       = rangeToMap('1' to '8')
 
-    private val MoveR = """^(N|B|R|Q|K|)([a-h]?)([1-8]?)(x?)([a-h][0-9])(=?[NBRQ]?)(\+?)(\#?)$""".r
-    private val DropR = """^([NBRQP])@([a-h][1-8])(\+?)(\#?)$""".r
+    private val MoveR = """^(N|B|R|Q|K|F|W|C)([a-h]?)([1-8]?)(x?)([a-h][0-9])(=?[NBRQFWC]?)(\+?)(\#?)$""".r
+    private val DropR = """^([NBRQPFWC])@([a-h][1-8])(\+?)(\#?)$""".r
 
     def apply(str: String, variant: Variant): Validated[String, San] = {
       if (str.length == 2) Pos.fromKey(str).fold(slow(str)) { pos =>
@@ -183,8 +183,6 @@ object Parser {
       }
       else
         str match {
-          case "O-O" | "o-o" | "0-0"       => valid(Castle(KingSide))
-          case "O-O-O" | "o-o-o" | "0-0-0" => valid(Castle(QueenSide))
           case MoveR(role, file, rank, capture, pos, prom, check, mate) =>
             role.headOption.fold[Option[Role]](Option(Pawn))(variant.rolesByPgn.get) flatMap { role =>
               Pos fromKey pos map { dest =>
@@ -235,16 +233,7 @@ object Parser {
         case err             => invalid("Cannot parse move: %s\n%s".format(err.toString, str))
       }
 
-    def move: Parser[San] = castle | standard
-
-    def castle =
-      (qCastle | kCastle) ~ suffixes ^^ { case side ~ suf =>
-        Castle(side) withSuffixes suf
-      }
-
-    val qCastle: Parser[Side] = ("O-O-O" | "o-o-o" | "0-0-0") ^^^ QueenSide
-
-    val kCastle: Parser[Side] = ("O-O" | "o-o" | "0-0") ^^^ KingSide
+    def move: Parser[San] = standard
 
     def standard: Parser[San] =
       as("standard") {

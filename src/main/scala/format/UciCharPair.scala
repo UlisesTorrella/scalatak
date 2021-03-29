@@ -12,8 +12,7 @@ object UciCharPair {
 
   def apply(uci: Uci): UciCharPair =
     uci match {
-      case Uci.Move(orig, dest, None)       => UciCharPair(toChar(orig), toChar(dest))
-      case Uci.Move(orig, dest, Some(role)) => UciCharPair(toChar(orig), toChar(dest.file, role))
+      case Uci.Move(orig, dest, 0)       => UciCharPair(toChar(orig), toChar(dest))
       case Uci.Drop(role, pos) =>
         UciCharPair(
           toChar(pos),
@@ -34,20 +33,12 @@ object UciCharPair {
 
     def toChar(pos: Pos) = pos2charMap.getOrElse(pos, voidChar)
 
-    val promotion2charMap: Map[(File, PromotableRole), Char] = for {
-      (role, index) <- Role.allPromotable.zipWithIndex.to(Map)
-      file          <- File.all
-    } yield (file, role) -> (charShift + pos2charMap.size + index * 8 + file.index).toChar
-
-    def toChar(file: File, prom: PromotableRole) =
-      promotion2charMap.getOrElse(file -> prom, voidChar)
-
     val dropRole2charMap: Map[Role, Char] =
       Role.all
         .filterNot(King ==)
         .zipWithIndex
         .map { case (role, index) =>
-          role -> (charShift + pos2charMap.size + promotion2charMap.size + index).toChar
+          role -> (charShift + pos2charMap.size + index).toChar
         }
         .to(Map)
   }

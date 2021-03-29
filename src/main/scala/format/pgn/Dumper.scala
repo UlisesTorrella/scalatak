@@ -1,23 +1,13 @@
 package chess
 package format.pgn
-
+import scala.collection.mutable.Stack
 object Dumper {
 
   def apply(situation: Situation, data: chess.Move, next: Situation): String = {
     import data._
 
-    ((promotion, piece.role) match {
-      case _ if castles =>
-        if (orig ?> dest) "O-O-O" else "O-O"
-
-      case _ if enpassant =>
-        orig.file.toString + "x" + dest.key
-
-      case (promotion, Pawn) =>
-        (if (captures) s"${orig.file}x" else "") +
-          promotion.fold(dest.key)(p => s"${dest.key}=${p.pgn}")
-
-      case (_, role) =>
+    ((piece.role) match {
+      case (role) =>
         // Check whether there is a need to disambiguate:
         //   - can a piece of same role move to/capture on the same square?
         //   - if so, disambiguate, in order or preference, by:
@@ -25,10 +15,10 @@ object Dumper {
         //       - rank
         //       - both (only happens w/ at least 3 pieces of the same role)
         val candidates = situation.board.pieces collect {
-          case (cpos, cpiece) if cpiece == piece && cpos != orig && cpiece.eyes(cpos, dest) => cpos
+          case (cpos, Stack(cpiece, _*)) if cpiece == piece && cpos != orig && cpiece.eyes(cpos, dest) => cpos
         } filter { cpos =>
           // We know Role ≠ Pawn, so it is fine to always pass None as promotion target
-          situation.move(cpos, dest, None).isValid
+          situation.move(cpos, dest, 0).isValid
         }
 
         val disambiguation = if (candidates.isEmpty) {

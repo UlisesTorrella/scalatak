@@ -11,9 +11,9 @@ case class Move(
     after: Board,
     capture: Option[Pos],
     promotion: Option[PromotableRole],
-    castle: Option[((Pos, Pos), (Pos, Pos))],
     enpassant: Boolean,
-    metrics: MoveMetrics = MoveMetrics()
+    metrics: MoveMetrics = MoveMetrics(),
+    stackIndex: Int = 0 // by default at top
 ) {
   def before = situationBefore.board
 
@@ -29,11 +29,9 @@ case class Move(
           if ((piece is Pawn) || captures || promotes) 0
           else h1.halfMoveClock + 1
       )
-    } fixCastles
+    }
 
-    // Update position hashes last, only after updating the board,
-    // castling rights and en-passant rights.
-    board.variant.finalizeBoard(board, toUci, capture flatMap before.apply) updateHistory { h =>
+    board.variant.finalizeBoard(board, toUci) updateHistory { h =>
       lazy val positionHashesOfSituationBefore =
         if (h.positionHashes.isEmpty) Hash(situationBefore) else h.positionHashes
       val resetsPositionHashes = board.variant.isIrreversible(this)
@@ -50,13 +48,6 @@ case class Move(
 
   def promotes = promotion.isDefined
 
-  def castles = castle.isDefined
-
-  def normalizeCastle =
-    castle.fold(this) { case (_, (rookOrig, _)) =>
-      copy(dest = rookOrig)
-    }
-
   def color = piece.color
 
   def withPromotion(op: Option[PromotableRole]): Option[Move] =
@@ -72,7 +63,9 @@ case class Move(
 
   def withMetrics(m: MoveMetrics) = copy(metrics = m)
 
-  def toUci = Uci.Move(orig, dest, promotion)
+  def withIndex(i: Int) = copy(stackIndex=i)
+
+  def toUci = Uci.Move(orig, dest, stackIndex)
 
   override def toString = s"$piece ${toUci.uci}"
 }

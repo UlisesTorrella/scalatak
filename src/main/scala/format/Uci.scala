@@ -19,44 +19,45 @@ object Uci {
   case class Move(
       orig: Pos,
       dest: Pos,
-      promotion: Option[PromotableRole] = None
+      i: Int = 1
   ) extends Uci {
 
-    def keys = orig.key + dest.key
-    def uci  = keys + promotionString
+    def keys = orig.key + dest.key + i.toString
+    def uci  = keys
 
-    def keysPiotr = orig.piotrStr + dest.piotrStr
-    def piotr     = keysPiotr + promotionString
-
-    def promotionString = promotion.fold("")(_.forsyth.toString)
+    def keysPiotr = orig.piotrStr + dest.piotrStr + i.toString
+    def piotr     = keysPiotr
 
     def origDest = orig -> dest
 
-    def apply(situation: Situation) = situation.move(orig, dest, promotion) map Left.apply
+    def apply(situation: Situation) = situation.move(orig, dest, i) map Left.apply
   }
 
   object Move {
 
     def apply(move: String): Option[Move] =
-      for {
-        orig <- Pos.fromKey(move take 2)
-        dest <- Pos.fromKey(move.slice(2, 4))
-        promotion = move lift 4 flatMap Role.promotable
-      } yield Move(orig, dest, promotion)
+      if ( move.size < 4) None
+      else
+        for {
+          orig <- Pos.fromKey(move take 2)
+          dest <- Pos.fromKey(move.slice(2, 4))
+          i    = "1"//move lift 4 getOrElse "0"
+        } yield Move(orig, dest, i.toInt)
 
     def piotr(move: String) =
-      for {
-        orig <- move.headOption flatMap Pos.piotr
-        dest <- move lift 1 flatMap Pos.piotr
-        promotion = move lift 2 flatMap Role.promotable
-      } yield Move(orig, dest, promotion)
+      if ( move.size < 2) None
+      else
+        for {
+          orig <- move.headOption flatMap Pos.piotr
+          dest <- move lift 1 flatMap Pos.piotr
+          i    = "1"//move(2)
+        } yield Move(orig, dest, i.toInt)
 
-    def fromStrings(origS: String, destS: String, promS: Option[String]) =
+    def fromStrings(origS: String, destS: String, i: Int = 0) =
       for {
         orig <- Pos.fromKey(origS)
         dest <- Pos.fromKey(destS)
-        promotion = Role promotable promS
-      } yield Move(orig, dest, promotion)
+      } yield Move(orig, dest, i)
   }
 
   case class Drop(role: Role, pos: Pos) extends Uci {
@@ -81,7 +82,7 @@ object Uci {
 
   case class WithSan(uci: Uci, san: String)
 
-  def apply(move: chess.Move) = Uci.Move(move.orig, move.dest, move.promotion)
+  def apply(move: chess.Move) = Uci.Move(move.orig, move.dest, move.stackIndex)
 
   def apply(drop: chess.Drop) = Uci.Drop(drop.piece.role, drop.pos)
 

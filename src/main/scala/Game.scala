@@ -15,10 +15,10 @@ case class Game(
   def apply(
       orig: Pos,
       dest: Pos,
-      promotion: Option[PromotableRole] = None,
+      i: Int = 0,
       metrics: MoveMetrics = MoveMetrics()
   ): Validated[String, (Game, Move)] =
-    situation.move(orig, dest, promotion).map(_.normalizeCastle withMetrics metrics) map { move =>
+    situation.move(orig, dest, i).map(_ withMetrics metrics) map { move =>
       apply(move) -> move
     }
 
@@ -61,7 +61,7 @@ case class Game(
       }
     }
 
-  def apply(uci: Uci.Move): Validated[String, (Game, Move)] = apply(uci.orig, uci.dest, uci.promotion)
+  def apply(uci: Uci.Move): Validated[String, (Game, Move)] = apply(uci.orig, uci.dest, uci.i)
   def apply(uci: Uci.Drop): Validated[String, (Game, Drop)] = drop(uci.role, uci.pos)
   def apply(uci: Uci): Validated[String, (Game, MoveOrDrop)] =
     uci match {

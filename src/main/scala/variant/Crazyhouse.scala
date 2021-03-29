@@ -18,13 +18,9 @@ case object Crazyhouse
 
   def pieces = Standard.pieces
 
-  override val initialFen = FEN("8/8/8/8/8/8/8/8/ w - - 0 1")
+  override val initialFen = FEN("8/8/8/8/8/8/8/8/FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFCCWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWffffffffffffffffffffffffffffffffffffffffffffffffffccwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww w - - 0 1")
 
-  override def valid(board: Board, strict: Boolean) = {
-    val pieces = board.pieces.values
-    (Color.all forall validSide(board, false)) &&
-    (!strict || (pieces.count(_ is Pawn) <= 16 && pieces.sizeIs <= 32))
-  }
+  override def valid(board: Board, strict: Boolean) = true
 
   override def drop(situation: Situation, role: Role, pos: Pos): Validated[String, Drop] =
     for {
@@ -41,10 +37,9 @@ case object Crazyhouse
 
   override def fiftyMoves(history: History): Boolean = false
 
-  override def isIrreversible(move: Move): Boolean = move.castles
+  override def isIrreversible(move: Move): Boolean = false
 
-  override def finalizeBoard(board: Board, uci: Uci, capture: Option[Piece]): Board =
-    board
+  override def finalizeBoard(board: Board, uci: Uci): Board = board
 
   // Checkmate here means a path has been stablished
   override def checkmate(situation: Situation) = situation.board hasPath !situation.color

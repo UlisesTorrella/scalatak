@@ -21,11 +21,7 @@ case class Situation(board: Board, color: Color) {
       case _                          => None
     }
 
-  lazy val kingPos: Option[Pos] = board kingPosOf color
-
-  lazy val check: Boolean = board check color
-
-  def checkSquare = if (check) kingPos else None
+  lazy val check: Boolean = false
 
   def history = board.history
 
@@ -55,16 +51,14 @@ case class Situation(board: Board, color: Color) {
     else if (autoDraw) Status.Draw.some
     else none
 
-  def move(from: Pos, to: Pos, promotion: Option[PromotableRole]): Validated[String, Move] =
-    board.variant.move(this, from, to, promotion)
+  def move(from: Pos, to: Pos, index: Int = 0): Validated[String, Move] =
+    board.variant.move(this, from, to, index)
 
   def move(uci: Uci.Move): Validated[String, Move] =
-    board.variant.move(this, uci.orig, uci.dest, uci.promotion)
+    board.variant.move(this, uci.orig, uci.dest, uci.i)
 
   def drop(role: Role, pos: Pos): Validated[String, Drop] =
     board.variant.drop(this, role, pos)
-
-  def fixCastles = copy(board = board fixCastles)
 
   def withHistory(history: History) =
     copy(
@@ -76,26 +70,7 @@ case class Situation(board: Board, color: Color) {
       board = board withVariant variant
     )
 
-  def canCastle = board.history.canCastle _
-
-  def enPassantSquare: Option[Pos] = {
-    // Before potentially expensive move generation, first ensure some basic
-    // conditions are met.
-    history.lastMove match {
-      case Some(move: Uci.Move) =>
-        if (
-          move.dest.yDist(move.orig) == 2 &&
-          board(move.dest).exists(_.is(Pawn)) &&
-          List(
-            move.dest.file.offset(-1),
-            move.dest.file.offset(1)
-          ).flatten.flatMap(board(_, color.passablePawnRank)).exists(_ == color.pawn)
-        )
-          moves.values.flatten.find(_.enpassant).map(_.dest)
-        else None
-      case _ => None
-    }
-  }
+  def enPassantSquare: Option[Pos] = None
 
   def unary_! = copy(color = !color)
 }

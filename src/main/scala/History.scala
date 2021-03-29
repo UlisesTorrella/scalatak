@@ -19,7 +19,6 @@ case class CheckCount(white: Int = 0, black: Int = 0) {
 case class History(
     lastMove: Option[Uci] = None,
     positionHashes: PositionHash = Array.empty,
-    castles: Castles = Castles.all,
     checkCount: CheckCount = CheckCount(0, 0),
     halfMoveClock: Int = 0
 ) {
@@ -43,16 +42,6 @@ case class History(
 
   def fivefoldRepetition = isRepetition(5)
 
-  def canCastle(color: Color) = castles can color
-
-  def withoutCastles(color: Color) = copy(castles = castles without color)
-
-  def withoutAnyCastles = copy(castles = Castles.none)
-
-  def withoutCastle(color: Color, side: Side) = copy(castles = castles.without(color, side))
-
-  def withCastles(c: Castles) = copy(castles = c)
-
   def withLastMove(m: Uci) = copy(lastMove = Option(m))
 
   def withCheck(color: Color, v: Boolean) =
@@ -70,29 +59,9 @@ object History {
 
   def make(
       lastMove: Option[String], // a2a4
-      castles: String
   ): History =
     History(
       lastMove = lastMove flatMap Uci.apply,
-      castles = Castles(castles),
       positionHashes = Array()
     )
-
-  def castle(color: Color, kingSide: Boolean, queenSide: Boolean) =
-    History(
-      castles = color match {
-        case White =>
-          Castles.init.copy(
-            whiteKingSide = kingSide,
-            whiteQueenSide = queenSide
-          )
-        case Black =>
-          Castles.init.copy(
-            blackKingSide = kingSide,
-            blackQueenSide = queenSide
-          )
-      }
-    )
-
-  def noCastle = History(castles = Castles.none)
 }
