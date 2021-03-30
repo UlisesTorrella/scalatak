@@ -12,7 +12,7 @@ case object Crazyhouse
       key = "crazyhouse",
       name = "Crazyhouse",
       shortName = "Crazy",
-      title = "Captured pieces can be dropped back on the board instead of moving a piece.",
+      title = "The goal of Tak is to be the first to connect two opposite edges of the board with pieces called stones, and create a road.",
       standardInitialPosition = true
     ) {
 
@@ -45,7 +45,7 @@ case object Crazyhouse
   override def checkmate(situation: Situation) = situation.board hasPath !situation.color
 
 
-  def canDropStuff(situation: Situation): Option[List[Pos]] =
+  override def canDropStuff(situation: Situation): Option[List[Pos]] =
     situation.board.crazyData match {
       case Some(data) => if (data.pockets(situation.color).roles.nonEmpty) Some(situation.board.emptySquares) else None
       case None => None

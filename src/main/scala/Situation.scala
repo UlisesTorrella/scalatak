@@ -15,11 +15,7 @@ case class Situation(board: Board, color: Color) {
 
   lazy val destinations: Map[Pos, List[Pos]] = moves.view.mapValues { _ map (_.dest) }.to(Map)
 
-  def drops: Option[List[Pos]] =
-    board.variant match {
-      case v: variant.Crazyhouse.type => v canDropStuff this
-      case _                          => None
-    }
+  def drops: Option[List[Pos]] = board.variant canDropStuff this
 
   lazy val check: Boolean = false
 

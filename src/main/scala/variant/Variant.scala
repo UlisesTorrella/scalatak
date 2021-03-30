@@ -24,7 +24,7 @@ abstract class Variant private[variant] (
 
   def crazyhouse    = this == Crazyhouse
 
-  def exotic = !standard
+  def exotic = true // tak is always exotic!
 
   protected val backRank = Vector(Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook)
 
@@ -82,6 +82,8 @@ abstract class Variant private[variant] (
 
   @nowarn def specialDraw(situation: Situation) = false
 
+
+  def canDropStuff(situation: Situation): Option[List[Pos]] = None
   /** Returns the material imbalance in pawns (overridden in Antichess)
     */
   def materialImbalance(board: Board): Int = board.count(Color.White) - board.count(Color.Black)

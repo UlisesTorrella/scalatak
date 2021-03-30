@@ -1,4 +1,0 @@
-[0m[[0m[33mwarn[0m] [0m[0m/home/ulince/Data/Projects/Litak/scalatak/src/main/scala/Board.scala:82:15: parameter value pos in method promote is never used[0m
-[0m[[0m[33mwarn[0m] [0m[0m  def promote(pos: Pos): Option[Board] = None[0m
-[0m[[0m[33mwarn[0m] [0m[0m              ^[0m
-[0m[[0m[33mwarn[0m] [0m[0mone warning found[0m

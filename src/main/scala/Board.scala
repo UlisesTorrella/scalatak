@@ -1,13 +1,13 @@
 package chess
 
-import variant.{ Crazyhouse, Variant }
+import variant.{ Variant, Standard }
 import scala.collection.mutable.Stack
 
 case class Board(
     pieces: PieceMap,
     history: History,
     variant: Variant,
-    crazyData: Option[Crazyhouse.Data] = None
+    crazyData: Option[Standard.Data] = None
 ) {
 
   def apply(at: Pos): Option[Stack[Piece]] = pieces get at
@@ -88,19 +88,14 @@ case class Board(
 
   def withPieces(newPieces: PieceMap) = copy(pieces = newPieces)
 
-  def withVariant(v: Variant): Board = {
-    if (v == Crazyhouse)
-      copy(variant = v).ensureCrazyData
-    else
-      copy(variant = v)
-  }
+  def withVariant(v: Variant): Board = copy(variant = v).ensureCrazyData
 
-  def withCrazyData(data: Crazyhouse.Data)         = copy(crazyData = Option(data))
-  def withCrazyData(data: Option[Crazyhouse.Data]) = copy(crazyData = data)
-  def withCrazyData(f: Crazyhouse.Data => Crazyhouse.Data): Board =
-    withCrazyData(f(crazyData | Crazyhouse.Data.init))
+  def withCrazyData(data: Standard.Data)         = copy(crazyData = Option(data))
+  def withCrazyData(data: Option[Standard.Data]) = copy(crazyData = data)
+  def withCrazyData(f: Standard.Data => Standard.Data): Board =
+    withCrazyData(f(crazyData | Standard.Data.init))
 
-  def ensureCrazyData = withCrazyData(crazyData | Crazyhouse.Data.init)
+  def ensureCrazyData = withCrazyData(crazyData | Standard.Data.init)
 
   def updateHistory(f: History => History) = copy(history = f(history))
 
@@ -160,6 +155,5 @@ object Board {
 
   def empty(variant: Variant): Board = Board(Map.empty[Pos, Stack[Piece]], variant)
 
-  private def variantCrazyData(variant: Variant) =
-    (variant == Crazyhouse) option Crazyhouse.Data.init
+  private def variantCrazyData(variant: Variant) = Option(Standard.Data.init)
 }

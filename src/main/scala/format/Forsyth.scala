@@ -101,7 +101,7 @@ object Forsyth {
       Board(pieces, variant = variant)
     } map { board =>
       pockets.fold(board) { str =>
-        import chess.variant.Crazyhouse.{ Pocket, Pockets }
+        import chess.variant.Standard.{ Pocket, Pockets }
         val (white, black) = str.toList.flatMap(Piece.fromChar).partition(_ is White)
         board.withCrazyData(
           _.copy(
@@ -170,7 +170,7 @@ object Forsyth {
 
   private def exportCrazyPocket(board: Board) =
     board.crazyData match {
-      case Some(variant.Crazyhouse.Data(pockets)) =>
+      case Some(variant.Standard.Data(pockets)) =>
         "/" +
           pockets.white.roles.map(_.forsythUpper).mkString +
           pockets.black.roles.map(_.forsyth).mkString
