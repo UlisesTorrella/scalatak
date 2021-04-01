@@ -60,7 +60,7 @@ case class Board(
     if (!(pieces contains orig)) None
     else
       for {
-        stack <- pieces get orig
+        stack  <- pieces get orig
         dstack = pieces.getOrElse(dest, Stack[Piece]())
         (movingPieces, leftPieces) = stack splitAt index
       } yield copy(pieces = pieces - dest - orig

@@ -15,10 +15,10 @@ object Dumper {
         //       - rank
         //       - both (only happens w/ at least 3 pieces of the same role)
         val candidates = situation.board.pieces collect {
-          case (cpos, Stack(cpiece, _*)) if cpiece == piece && cpos != orig && cpiece.eyes(cpos, dest) => cpos
+          case (cpos, Stack(cpiece, _*)) if cpiece == piece && cpos != orig && cpiece.eyes(cpos, firstStep) => cpos
         } filter { cpos =>
           // We know Role ≠ Pawn, so it is fine to always pass None as promotion target
-          situation.move(cpos, dest, 0).isValid
+          situation.move(stackIndex, cpos, dir, drops).isValid
         }
 
         val disambiguation = if (candidates.isEmpty) {
@@ -31,7 +31,7 @@ object Dumper {
           orig.key
         }
 
-        s"${role.pgn}$disambiguation${if (captures) "x" else ""}${dest.key}"
+        s"${role.pgn}$disambiguation${if (captures) "x" else ""}${firstStep.key}"
     }) + {
       if (next.check) {
         if (next.checkMate) "#" else "+"

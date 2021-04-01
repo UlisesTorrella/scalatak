@@ -3,17 +3,20 @@ package chess
 import chess.format.Uci
 import cats.syntax.option._
 
+import Direction._
+
 case class Move(
     piece: Piece,
     orig: Pos,
-    dest: Pos,
+    dir: Direction,
     situationBefore: Situation,
     after: Board,
     capture: Option[Pos],
     promotion: Option[PromotableRole],
     enpassant: Boolean,
     metrics: MoveMetrics = MoveMetrics(),
-    stackIndex: Int = 0 // by default at top
+    stackIndex: Int = 0, // by default at top
+    drops: List[Int] = Nil // empty drop list will be considered as "all stones dropped in the first square"
 ) {
   def before = situationBefore.board
 
@@ -43,6 +46,11 @@ case class Move(
 
   def applyVariantEffect: Move = before.variant addVariantEffect this
 
+  def firstStep: Pos = Direction(dir, orig) match {
+    case Some(x) => x
+    case None    => orig
+  }
+
   // does this move capture an opponent piece?
   def captures = capture.isDefined
 
@@ -50,22 +58,15 @@ case class Move(
 
   def color = piece.color
 
-  def withPromotion(op: Option[PromotableRole]): Option[Move] =
-    op.fold(this.some) { p =>
-      if ((after count color.queen) > (before count color.queen)) for {
-        b2 <- after take dest
-        b3 <- b2.place(color - p, dest)
-      } yield copy(after = b3, promotion = Option(p))
-      else this.some
-    }
-
   def withAfter(newBoard: Board) = copy(after = newBoard)
 
   def withMetrics(m: MoveMetrics) = copy(metrics = m)
 
   def withIndex(i: Int) = copy(stackIndex=i)
 
-  def toUci = Uci.Move(orig, dest, stackIndex)
+  def withDrops(drops: List[Int]) = copy(drops=drops)
+
+  def toUci = Uci.Move(orig, dir, stackIndex, drops)
 
   override def toString = s"$piece ${toUci.uci}"
 }

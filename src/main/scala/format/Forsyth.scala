@@ -30,19 +30,18 @@ object Forsyth {
           val fifthRank   = if (situation.color == White) Rank.Fifth else Rank.Fourth
           val sixthRank   = if (situation.color == White) Rank.Sixth else Rank.Third
           val seventhRank = if (situation.color == White) Rank.Seventh else Rank.Second
-          val lastMove = for {
-            pos <- splitted lift 3 flatMap Pos.fromKey
-            if pos.rank == sixthRank
-            orig = Pos(pos.file, seventhRank)
-            dest = Pos(pos.file, fifthRank)
-            if situation.board(dest).contains(Piece(!situation.color, Pawn)) &&
-              situation.board(pos.file, sixthRank).isEmpty &&
-              situation.board(orig).isEmpty
-          } yield Uci.Move(orig, dest)
+          // val lastMove = for {
+          //   pos <- splitted lift 3 flatMap Pos.fromKey
+          //   if pos.rank == sixthRank
+          //   orig = Pos(pos.file, seventhRank)
+          //   dest = Pos(pos.file, fifthRank)
+          //   if situation.board(dest).contains(Piece(!situation.color, Pawn)) &&
+          //     situation.board(pos.file, sixthRank).isEmpty &&
+          //     situation.board(orig).isEmpty
+          // } yield Uci.Move(orig, dest)
 
           situation withHistory {
             val history = History(
-              lastMove = lastMove,
               positionHashes = Array.empty
             )
             history

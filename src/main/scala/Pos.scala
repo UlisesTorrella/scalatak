@@ -2,6 +2,8 @@ package chess
 
 import scala.math.{ abs, max, min }
 
+import Direction.Direction
+
 case class Pos private (index: Int) extends AnyVal {
 
   def down: Option[Pos]      = Pos.at(file.index, rank.index - 1)
@@ -17,12 +19,12 @@ case class Pos private (index: Int) extends AnyVal {
 
   def takNeighboursRight: List[Pos] = List(up, right, down).flatten
 
-  def >|(stop: Pos => Boolean): List[Pos] = |<>|(stop, _.right)
-  def |<(stop: Pos => Boolean): List[Pos] = |<>|(stop, _.left)
-  def |<>|(stop: Pos => Boolean, dir: Direction): List[Pos] =
-    dir(this) map { p =>
-      p :: (if (stop(p)) Nil else p.|<>|(stop, dir))
-    } getOrElse Nil
+  // def >|(stop: Pos => Boolean): List[Pos] = |<>|(stop, _.right)
+  // def |<(stop: Pos => Boolean): List[Pos] = |<>|(stop, _.left)
+  // def |<>|(stop: Pos => Boolean, dir: Direction): List[Pos] =
+  //   Direction(p, dir) map { p =>
+  //     p :: (if (stop(p)) Nil else p.|<>|(stop, dir))
+  //   } getOrElse Nil
 
   def ?<(other: Pos): Boolean = file < other.file
   def ?>(other: Pos): Boolean = file > other.file

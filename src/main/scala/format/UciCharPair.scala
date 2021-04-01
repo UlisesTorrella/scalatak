@@ -1,6 +1,8 @@
 package chess
 package format
 
+import Direction.Direction
+
 case class UciCharPair(a: Char, b: Char) {
 
   override def toString = s"$a$b"
@@ -12,7 +14,7 @@ object UciCharPair {
 
   def apply(uci: Uci): UciCharPair =
     uci match {
-      case Uci.Move(orig, dest, 0)       => UciCharPair(toChar(orig), toChar(dest))
+      case Uci.Move(orig, dir, i, drops)       => UciCharPair(toChar(orig), toChar(dir))
       case Uci.Drop(role, pos) =>
         UciCharPair(
           toChar(pos),
@@ -32,6 +34,8 @@ object UciCharPair {
       .to(Map)
 
     def toChar(pos: Pos) = pos2charMap.getOrElse(pos, voidChar)
+
+    def toChar(dir: Direction) = Direction.toChar(dir)
 
     val dropRole2charMap: Map[Role, Char] =
       Role.all

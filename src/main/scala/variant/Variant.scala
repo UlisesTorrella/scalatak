@@ -7,6 +7,7 @@ import scala.annotation.nowarn
 import scala.collection.mutable.Stack
 import chess.format.FEN
 
+import Direction.Direction
 // Correctness depends on singletons for each variant ID
 abstract class Variant private[variant] (
     val id: Int,
@@ -39,28 +40,25 @@ abstract class Variant private[variant] (
 
   def kingSafety(m: Move, filter: Piece => Boolean, kingPos: Option[Pos]): Boolean = true
 
-  def longRangeThreatens(board: Board, p: Pos, dir: Direction, to: Pos): Boolean =
-    dir(p) exists { next =>
-      next == to || (!board.pieces.contains(next) && longRangeThreatens(board, next, dir, to))
-    }
-
   def move(
       situation: Situation,
+      index: Int,
       from: Pos,
-      to: Pos,
-      index: Int
+      dir: Direction,
+      drops: List[Int]
   ): Validated[String, Move] = {
 
     // Find the move in the variant specific list of valid moves
-    def findMove(from: Pos, to: Pos) = situation.moves get from flatMap (_.find(_.dest == to))
+    def findMove(from: Pos, dir: Direction) =
+      situation.moves get from flatMap (_.find(_.dir == dir))
 
     for {
       actor <- situation.board.actors get from toValid "No piece on " + from
       _ <-
         if (actor is situation.color) Validated.valid(actor)
         else Validated.invalid("Not my piece on " + from)
-      m1 <- findMove(from, to) toValid "Piece on " + from + " cannot move to " + to
-    } yield m1 withIndex index
+      m1 <- findMove(from, dir) toValid "Piece on " + from + " cannot move to " + dir
+    } yield (m1 withIndex index) withDrops drops
   }
 
   def drop(situation: Situation, role: Role, pos: Pos): Validated[String, Drop] =

@@ -6,9 +6,6 @@ package object chess extends scalalib.Common with scalalib.OrnicarOption with sc
   val White = Color.White
   val Black = Color.Black
 
-  type Direction  = Pos => Option[Pos]
-  type Directions = List[Direction]
-
   type PieceMap = Map[Pos, Stack[Piece]]
 
   type PositionHash = Array[Byte]

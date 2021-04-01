@@ -4,60 +4,67 @@ package format
 import cats.data.Validated
 import cats.implicits._
 
+import Direction.Direction
+
 sealed trait Uci {
 
   def uci: String
   def piotr: String
 
-  def origDest: (Pos, Pos)
+  def origDest: (Pos, String)
 
   def apply(situation: Situation): Validated[String, MoveOrDrop]
 }
 
+// https://ustak.org/portable-tak-notation/
 object Uci {
 
   case class Move(
       orig: Pos,
-      dest: Pos,
-      i: Int = 1
+      dir: Direction,
+      i: Int = 1,
+      drops: List[Int] = List()
   ) extends Uci {
 
-    def keys = orig.key + dest.key + i.toString
+    def keys = i.toString + orig.key + dir.toString + drops.map(_.toString).mkString("")
     def uci  = keys
 
-    def keysPiotr = orig.piotrStr + dest.piotrStr + i.toString
+    def keysPiotr = i.toString + orig.piotrStr + dir.toString + drops.map(_.toString).mkString("")
     def piotr     = keysPiotr
 
-    def origDest = orig -> dest
+    def origDest = orig -> dir.toString
 
-    def apply(situation: Situation) = situation.move(orig, dest, i) map Left.apply
+    def apply(situation: Situation) = situation.move(i, orig, dir, drops) map Left.apply
   }
 
   object Move {
+
+    def drops(dropsS: String): List[Int] = dropsS.map(_.toInt - 48).toList
 
     def apply(move: String): Option[Move] =
       if ( move.size < 4) None
       else
         for {
-          orig <- Pos.fromKey(move take 2)
-          dest <- Pos.fromKey(move.slice(2, 4))
-          i    = "1"//move lift 4 getOrElse "0"
-        } yield Move(orig, dest, i.toInt)
+          i      <- move lift 0
+          orig   <- Pos.fromKey(move.substring(1,3))
+          dir    <- move lift 3
+          dropsS = move drop 4
+        } yield Move(orig, Direction(dir), i.toInt - 48, drops(dropsS))
 
     def piotr(move: String) =
-      if ( move.size < 2) None
+      if ( move.size < 3) None
       else
         for {
-          orig <- move.headOption flatMap Pos.piotr
-          dest <- move lift 1 flatMap Pos.piotr
-          i    = "1"//move(2)
-        } yield Move(orig, dest, i.toInt)
+          i     <- move lift 0
+          orig  <- move lift 1 flatMap Pos.piotr
+          dir   <- move lift 2
+          dropsS = move drop 3
+        } yield Move(orig, Direction(dir), i.toInt - 48, drops(dropsS))
 
-    def fromStrings(origS: String, destS: String, i: Int = 0) =
+    def fromStrings(origS: String, dir: String, i: Int = 0, dropsS: String = "") =
       for {
         orig <- Pos.fromKey(origS)
-        dest <- Pos.fromKey(destS)
-      } yield Move(orig, dest, i)
+      } yield Move(orig, Direction(dir), i, drops(dropsS))
   }
 
   case class Drop(role: Role, pos: Pos) extends Uci {
@@ -66,7 +73,7 @@ object Uci {
 
     def piotr = s"${role.pgn}@${pos.piotrStr}"
 
-    def origDest = pos -> pos
+    def origDest = pos -> "@"
 
     def apply(situation: Situation) = situation.drop(role, pos) map Right.apply
   }
@@ -82,7 +89,7 @@ object Uci {
 
   case class WithSan(uci: Uci, san: String)
 
-  def apply(move: chess.Move) = Uci.Move(move.orig, move.dest, move.stackIndex)
+  def apply(move: chess.Move) = Uci.Move(move.orig, move.dir, move.stackIndex, move.drops)
 
   def apply(drop: chess.Drop) = Uci.Drop(drop.piece.role, drop.pos)
 

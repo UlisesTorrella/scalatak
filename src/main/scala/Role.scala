@@ -1,12 +1,14 @@
 package chess
 
+import Direction.Direction
+
 sealed trait Role {
   val forsyth: Char
   lazy val forsythUpper: Char = forsyth.toUpper
   lazy val pgn: Char          = forsythUpper
   lazy val name               = toString.toLowerCase
   val projection: Boolean
-  val dirs: Directions
+  val dirs: List[Direction]
   def dir(from: Pos, to: Pos): Option[Direction]
 }
 sealed trait PromotableRole extends Role
@@ -17,7 +19,7 @@ object Pathstone {}
   */
 case object King extends PromotableRole {
   val forsyth                 = 'k'
-  val dirs: Directions        = Queen.dirs
+  val dirs: List[Direction]        = Flatstone.dirs
   def dir(from: Pos, to: Pos) = None
   val projection              = false
 }
@@ -25,11 +27,11 @@ case object King extends PromotableRole {
 // Tak piece
 case object Flatstone extends Pathstone {
   val forsyth                 = 'f'
-  val dirs: Directions = List(
-    p => Pos.at(p.file.index - 1, p.rank.index),
-    p => Pos.at(p.file.index + 1, p.rank.index),
-    p => Pos.at(p.file.index, p.rank.index + 1),
-    p => Pos.at(p.file.index, p.rank.index - 1)
+  val dirs: List[Direction] = List(
+    Direction.Up,
+    Direction.Down,
+    Direction.Left,
+    Direction.Right
   )
   def dir(from: Pos, to: Pos) = None
   val projection              = false
@@ -38,7 +40,7 @@ case object Flatstone extends Pathstone {
 // Tak piece
 case object Capstone extends Pathstone {
   val forsyth                 = 'c'
-  val dirs: Directions        = Flatstone.dirs
+  val dirs: List[Direction]   = Flatstone.dirs
   def dir(from: Pos, to: Pos) = None
   val projection              = false
 }
@@ -46,59 +48,38 @@ case object Capstone extends Pathstone {
 // Tak piece
 case object Wallstone extends Role {
   val forsyth                 = 'w'
-  val dirs: Directions        = Flatstone.dirs
+  val dirs: List[Direction]        = Flatstone.dirs
   def dir(from: Pos, to: Pos) = None
   val projection              = false
 }
 
 case object Queen extends PromotableRole {
   val forsyth                 = 'q'
-  val dirs: Directions        = Rook.dirs ::: Bishop.dirs
+  val dirs: List[Direction]        = Flatstone.dirs
   def dir(from: Pos, to: Pos) = Rook.dir(from, to) orElse Bishop.dir(from, to)
   val projection              = true
 }
 case object Rook extends PromotableRole {
   val forsyth          = 'r'
-  val dirs: Directions = List(_.up, _.down, _.left, _.right)
-  def dir(from: Pos, to: Pos) =
-    if (to ?| from)
-      Option(if (to ?^ from) (_.up) else (_.down))
-    else if (to ?- from)
-      Option(if (to ?< from) (_.left) else (_.right))
-    else None
+  val dirs: List[Direction] = Flatstone.dirs
+  def dir(from: Pos, to: Pos) = None
   val projection = true
 }
 case object Bishop extends PromotableRole {
   val forsyth          = 'b'
-  val dirs: Directions = List(_.upLeft, _.upRight, _.downLeft, _.downRight)
-  def dir(from: Pos, to: Pos) =
-    if (to onSameDiagonal from)
-      Option(if (to ?^ from) {
-        if (to ?< from) (_.upLeft) else (_.upRight)
-      } else {
-        if (to ?< from) (_.downLeft) else (_.downRight)
-      })
-    else None
+  val dirs: List[Direction] = Flatstone.dirs
+  def dir(from: Pos, to: Pos) = None
   val projection = true
 }
 case object Knight extends PromotableRole {
   val forsyth = 'n'
-  val dirs: Directions = List(
-    p => Pos.at(p.file.index - 1, p.rank.index + 2),
-    p => Pos.at(p.file.index - 1, p.rank.index - 2),
-    p => Pos.at(p.file.index + 1, p.rank.index + 2),
-    p => Pos.at(p.file.index + 1, p.rank.index - 2),
-    p => Pos.at(p.file.index - 2, p.rank.index + 1),
-    p => Pos.at(p.file.index - 2, p.rank.index - 1),
-    p => Pos.at(p.file.index + 2, p.rank.index + 1),
-    p => Pos.at(p.file.index + 2, p.rank.index - 1)
-  )
+  val dirs: List[Direction] = Flatstone.dirs
   def dir(from: Pos, to: Pos) = None
   val projection              = false
 }
 case object Pawn extends Role {
   val forsyth                 = 'p'
-  val dirs: Directions        = Nil
+  val dirs: List[Direction]        = Nil
   def dir(from: Pos, to: Pos) = None
   val projection              = false
 }
@@ -150,6 +131,6 @@ object Role {
       case King   => None
       case Flatstone => Option(1)
       case Wallstone => Option(2)
-      case Capstone => Option(3)
+      case Capstone  => Option(3)
     }
 }

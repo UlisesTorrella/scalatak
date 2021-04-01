@@ -2,7 +2,10 @@ package chess
 package format.pgn
 import scala.collection.mutable.Stack
 import cats.data.Validated
+import cats.data.Validated.{ invalid, valid }
 import cats.syntax.option._
+
+import Direction.Direction
 
 case class ParsedPgn(
     initialPosition: InitialPosition,
@@ -38,8 +41,9 @@ sealed trait San {
 }
 
 case class Std(
-    dest: Pos,
-    role: Role,
+    dir: Direction,
+    index: Int = 0,
+    drops: List[Int] = Nil,
     capture: Boolean = false,
     file: Option[Int] = None,
     rank: Option[Int] = None,
@@ -60,21 +64,21 @@ case class Std(
   def move(situation: Situation): Validated[String, chess.Move] =
     situation.board.pieces.foldLeft(none[chess.Move]) {
       case (None, (pos, Stack(piece, _*)))
-          if piece.color == situation.color && piece.role == role && compare(
+          if piece.color == situation.color && compare(
             file,
             pos.file.index + 1
           ) && compare(
             rank,
             pos.rank.index + 1
-          ) && piece.eyesMovable(pos, dest) =>
+          ) && piece.eyesMovable(pos, dir) =>
         val a = Actor(piece, pos, situation.board)
         (a trustedMoves).find { m =>
-          m.dest == dest
+          m.dir == dir
         }
       case (m, _) => m
     } match {
       case None       => Validated invalid s"No move found: $this\n$situation"
-      case Some(move) => move withPromotion promotion toValid "Wrong promotion"
+      case Some(move) => valid(move)
     }
 
   private def compare[A](a: Option[A], b: A) = a.fold(true)(b ==)

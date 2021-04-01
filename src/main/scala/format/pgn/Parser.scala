@@ -174,58 +174,40 @@ object Parser {
     private val fileMap                       = rangeToMap('a' to 'h')
     private val rankMap                       = rangeToMap('1' to '8')
 
-    private val MoveR = """^(N|B|R|Q|K|F|W|C)([a-h]?)([1-8]?)(x?)([a-h][0-9])(=?[NBRQFWC]?)(\+?)(\#?)$""".r
+    private val MoveR = """^([0-9]?)([a-h]?)([1-8]?)(<>+-)(\d+)$""".r // CAN FAIL AND EVERYTHING GOES BooM !
     private val DropR = """^([NBRQPFWC])@([a-h][1-8])(\+?)(\#?)$""".r
 
-    def apply(str: String, variant: Variant): Validated[String, San] = {
-      if (str.length == 2) Pos.fromKey(str).fold(slow(str)) { pos =>
-        valid(Std(pos, Pawn))
+    def apply(str: String, variant: Variant): Validated[String, San] =
+      str match {
+        case MoveR(index, file, rank, dir, drops) =>
+          valid(
+            Std(
+              dir = Direction(dir),
+              index = index.toInt,
+              file = if (file == "") None else fileMap get file.head,
+              rank = if (rank == "") None else rankMap get rank.head
+            )
+          )
+        case DropR(roleS, posS, check, mate) =>
+          roleS.headOption flatMap variant.rolesByPgn.get flatMap { role =>
+            Pos fromKey posS map { pos =>
+              valid(
+                Drop(
+                  role = role,
+                  pos = pos,
+                  metas = Metas(
+                    check = check.nonEmpty,
+                    checkmate = mate.nonEmpty,
+                    comments = Nil,
+                    glyphs = Glyphs.empty,
+                    variations = Nil
+                  )
+                )
+              )
+            }
+          } getOrElse invalid(s"Cannot parse drop: $str")
+        case _ => slow(str)
       }
-      else
-        str match {
-          case MoveR(role, file, rank, capture, pos, prom, check, mate) =>
-            role.headOption.fold[Option[Role]](Option(Pawn))(variant.rolesByPgn.get) flatMap { role =>
-              Pos fromKey pos map { dest =>
-                valid(
-                  Std(
-                    dest = dest,
-                    role = role,
-                    capture = capture != "",
-                    file = if (file == "") None else fileMap get file.head,
-                    rank = if (rank == "") None else rankMap get rank.head,
-                    promotion = if (prom == "") None else variant.rolesPromotableByPgn get prom.last,
-                    metas = Metas(
-                      check = check.nonEmpty,
-                      checkmate = mate.nonEmpty,
-                      comments = Nil,
-                      glyphs = Glyphs.empty,
-                      variations = Nil
-                    )
-                  )
-                )
-              }
-            } getOrElse slow(str)
-          case DropR(roleS, posS, check, mate) =>
-            roleS.headOption flatMap variant.rolesByPgn.get flatMap { role =>
-              Pos fromKey posS map { pos =>
-                valid(
-                  Drop(
-                    role = role,
-                    pos = pos,
-                    metas = Metas(
-                      check = check.nonEmpty,
-                      checkmate = mate.nonEmpty,
-                      comments = Nil,
-                      glyphs = Glyphs.empty,
-                      variations = Nil
-                    )
-                  )
-                )
-              }
-            } getOrElse invalid(s"Cannot parse drop: $str")
-          case _ => slow(str)
-        }
-    }
 
     private def slow(str: String): Validated[String, San] =
       parseAll(move, str) match {
@@ -237,22 +219,8 @@ object Parser {
 
     def standard: Parser[San] =
       as("standard") {
-        (disambiguatedPawn | pawn | disambiguated | ambiguous | drop) ~ suffixes ^^ { case std ~ suf =>
+        (disambiguated | drop) ~ suffixes ^^ { case std ~ suf =>
           std withSuffixes suf
-        }
-      }
-
-    // e5
-    def pawn: Parser[Std] =
-      as("pawn") {
-        dest ^^ (de => Std(dest = de, role = Pawn))
-      }
-
-    // Bg5
-    def ambiguous: Parser[Std] =
-      as("ambiguous") {
-        role ~ x ~ dest ^^ { case ro ~ ca ~ de =>
-          Std(dest = de, role = ro, capture = ca)
         }
       }
 
@@ -264,30 +232,17 @@ object Parser {
         }
       }
 
+    def drops: Parser[String] = """(\d+)$""".r
     // Bac3 Baxc3 B2c3 B2xc3 Ba2xc3
     def disambiguated: Parser[Std] =
       as("disambiguated") {
-        role ~ opt(file) ~ opt(rank) ~ x ~ dest ^^ { case ro ~ fi ~ ra ~ ca ~ de =>
+        index ~ opt(file) ~ opt(rank) ~ dir  ^^ { case i ~ fi ~ ra ~ di =>
           Std(
-            dest = de,
-            role = ro,
-            capture = ca,
-            file = fi,
-            rank = ra
-          )
-        }
-      }
-
-    // d7d5
-    def disambiguatedPawn: Parser[Std] =
-      as("disambiguated") {
-        opt(file) ~ opt(rank) ~ x ~ dest ^^ { case fi ~ ra ~ ca ~ de =>
-          Std(
-            dest = de,
-            role = Pawn,
-            capture = ca,
-            file = fi,
-            rank = ra
+            dir   = di,
+            index = i,
+            file  = fi,
+            rank  = ra
+          //  drops = dr.map(_.toInt - 48).toList
           )
         }
       }
@@ -329,6 +284,10 @@ object Parser {
     val promotion = ("=" ?) ~> mapParser(promotable, "promotion")
 
     val dest = mapParser(Pos.allKeys, "dest")
+
+    val dir = mapParser(Direction.allDirs, "dir")
+
+    val index = mapParser(Map("0" -> 0, "1" -> 1, "2" -> 2, "3" -> 3, "4" -> 4, "5" -> 5, "6" -> 6, "7" -> 7, "8" -> 8, "9" -> 9), "index")
 
     def exists(c: String): Parser[Boolean] = c ^^^ true | success(false)
 

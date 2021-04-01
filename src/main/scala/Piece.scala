@@ -1,5 +1,7 @@
 package chess
 
+import Direction.Direction
+
 case class Piece(color: Color, role: Role) {
 
   def is(c: Color)   = c == color
@@ -17,7 +19,7 @@ case class Piece(color: Color, role: Role) {
   def eyes(from: Pos, to: Pos): Boolean =
     role match {
       case King   => from touches to
-      case Capstone => from touches to
+      case Capstone  => from touches to
       case Wallstone => from touches to
       case Flatstone => from touches to
       case Queen  => (from onSameLine to) || (from onSameDiagonal to)
@@ -30,6 +32,25 @@ case class Piece(color: Color, role: Role) {
       case Pawn => Piece.pawnEyes(color, from, to)
     }
 
+  def eyes(from: Pos, dir: Direction): Boolean =
+    Direction(dir, from) match {
+      case Some(to) => role match {
+                        case King   => from touches to
+                        case Capstone  => from touches to
+                        case Wallstone => from touches to
+                        case Flatstone => from touches to
+                        case Queen  => (from onSameLine to) || (from onSameDiagonal to)
+                        case Rook   => from onSameLine to
+                        case Bishop => from onSameDiagonal to
+                        case Knight =>
+                          val xd = from xDist to
+                          val yd = from yDist to
+                          (xd == 1 && yd == 2) || (xd == 2 && yd == 1)
+                        case Pawn => Piece.pawnEyes(color, from, to)
+                      }
+      case None => false
+    }
+
   // movable positions assuming empty board
   def eyesMovable(from: Pos, to: Pos): Boolean =
     if (role == Pawn) Piece.pawnEyes(color, from, to) || {
@@ -40,6 +61,9 @@ case class Piece(color: Color, role: Role) {
       }
     }
     else eyes(from, to)
+
+  // movable positions assuming empty board
+  def eyesMovable(from: Pos, dir: Direction): Boolean = eyes(from, dir)
 
   override def toString = s"$color-$role".toLowerCase
 }

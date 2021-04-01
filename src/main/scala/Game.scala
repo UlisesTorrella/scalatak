@@ -5,6 +5,8 @@ import cats.data.Validated
 import chess.format.FEN
 import chess.format.{ pgn, Uci }
 
+import Direction.Direction
+
 case class Game(
     situation: Situation,
     pgnMoves: Vector[String] = Vector(),
@@ -14,11 +16,12 @@ case class Game(
 ) {
   def apply(
       orig: Pos,
-      dest: Pos,
-      i: Int = 0,
+      dir: Direction,
+      i: Int = 1,
+      drops: List[Int] = Nil,
       metrics: MoveMetrics = MoveMetrics()
   ): Validated[String, (Game, Move)] =
-    situation.move(orig, dest, i).map(_ withMetrics metrics) map { move =>
+    situation.move(i, orig, dir, drops).map(_ withMetrics metrics) map { move =>
       apply(move) -> move
     }
 
@@ -61,7 +64,7 @@ case class Game(
       }
     }
 
-  def apply(uci: Uci.Move): Validated[String, (Game, Move)] = apply(uci.orig, uci.dest, uci.i)
+  def apply(uci: Uci.Move): Validated[String, (Game, Move)] = apply(uci.orig, uci.dir, uci.i, uci.drops)
   def apply(uci: Uci.Drop): Validated[String, (Game, Drop)] = drop(uci.role, uci.pos)
   def apply(uci: Uci): Validated[String, (Game, MoveOrDrop)] =
     uci match {

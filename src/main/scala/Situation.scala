@@ -5,6 +5,8 @@ import cats.implicits._
 
 import chess.format.Uci
 
+import Direction._
+
 case class Situation(board: Board, color: Color) {
 
   lazy val actors = board actorsOf color
@@ -13,7 +15,7 @@ case class Situation(board: Board, color: Color) {
 
   lazy val playerCanCapture: Boolean = moves exists (_._2 exists (_.captures))
 
-  lazy val destinations: Map[Pos, List[Pos]] = moves.view.mapValues { _ map (_.dest) }.to(Map)
+  lazy val destinations: Map[Pos, List[Pos]] = moves.view.mapValues { _ map { move: Move => Direction(move.dir, move.orig)} flatten }.to(Map)
 
   def drops: Option[List[Pos]] = board.variant canDropStuff this
 
@@ -47,11 +49,11 @@ case class Situation(board: Board, color: Color) {
     else if (autoDraw) Status.Draw.some
     else none
 
-  def move(from: Pos, to: Pos, index: Int = 0): Validated[String, Move] =
-    board.variant.move(this, from, to, index)
+  def move(index:Int, from: Pos, dir: Direction, drops: List[Int]): Validated[String, Move] =
+    board.variant.move(this, index, from, dir, drops)
 
   def move(uci: Uci.Move): Validated[String, Move] =
-    board.variant.move(this, uci.orig, uci.dest, uci.i)
+    board.variant.move(this, uci.i, uci.orig, uci.dir, uci.drops)
 
   def drop(role: Role, pos: Pos): Validated[String, Drop] =
     board.variant.drop(this, role, pos)
