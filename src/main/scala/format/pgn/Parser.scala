@@ -174,8 +174,10 @@ object Parser {
     private val fileMap                       = rangeToMap('a' to 'h')
     private val rankMap                       = rangeToMap('1' to '8')
 
-    private val MoveR = """^([0-9]?)([a-h]?)([1-8]?)(<>+-)(\d+)$""".r // CAN FAIL AND EVERYTHING GOES BooM !
+    private val MoveR = """^([0-9]?)([a-h]?)([1-8]?)([<>+-])(\d+)$""".r // CAN FAIL AND EVERYTHING GOES BooM !
     private val DropR = """^([NBRQPFWC])@([a-h][1-8])(\+?)(\#?)$""".r
+
+    def dropsParser(dropsS: String): List[Int] = dropsS.toCharArray.map(_.toInt - 48).toList
 
     def apply(str: String, variant: Variant): Validated[String, San] =
       str match {
@@ -185,7 +187,8 @@ object Parser {
               dir = Direction(dir),
               index = index.toInt,
               file = if (file == "") None else fileMap get file.head,
-              rank = if (rank == "") None else rankMap get rank.head
+              rank = if (rank == "") None else rankMap get rank.head,
+              drops = dropsParser(drops)
             )
           )
         case DropR(roleS, posS, check, mate) =>
@@ -233,16 +236,16 @@ object Parser {
       }
 
     def drops: Parser[String] = """(\d+)$""".r
-    // Bac3 Baxc3 B2c3 B2xc3 Ba2xc3
+    // 3e4>21
     def disambiguated: Parser[Std] =
       as("disambiguated") {
-        index ~ opt(file) ~ opt(rank) ~ dir  ^^ { case i ~ fi ~ ra ~ di =>
+        index ~ opt(file) ~ opt(rank) ~ dir ~ drops  ^^ { case i ~ fi ~ ra ~ di ~ dr =>
           Std(
             dir   = di,
             index = i,
             file  = fi,
-            rank  = ra
-          //  drops = dr.map(_.toInt - 48).toList
+            rank  = ra,
+            drops = dropsParser(dr)
           )
         }
       }

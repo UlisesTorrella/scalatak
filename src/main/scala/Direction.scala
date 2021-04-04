@@ -8,9 +8,9 @@ object Direction extends Enumeration {
     val Right = Value(">")
     //junior, expert and senior are just to pass the test
 
-    val allDirs = Map("+"    -> Up,
-                      "-"  -> Down,
-                      "<"  -> Left,
+    val allDirs = Map("+" -> Up,
+                      "-" -> Down,
+                      "<" -> Left,
                       ">" -> Right)
 
     def toChar(dir: Direction) =

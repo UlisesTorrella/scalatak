@@ -15,8 +15,8 @@ case class Move(
     promotion: Option[PromotableRole],
     enpassant: Boolean,
     metrics: MoveMetrics = MoveMetrics(),
-    stackIndex: Int = 0, // by default at top
-    drops: List[Int] = Nil // empty drop list will be considered as "all stones dropped in the first square"
+    stackIndex: Int, // by default at top
+    drops: List[Int] = List(1) // empty drop list will be considered as "all stones dropped in the first square"
 ) {
   def before = situationBefore.board
 
@@ -50,6 +50,8 @@ case class Move(
     case Some(x) => x
     case None    => orig
   }
+
+  def dropsS = drops.map(_.toString).mkString("")
 
   // does this move capture an opponent piece?
   def captures = capture.isDefined

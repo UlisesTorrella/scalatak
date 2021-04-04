@@ -42,7 +42,7 @@ sealed trait San {
 
 case class Std(
     dir: Direction,
-    index: Int = 0,
+    index: Int,
     drops: List[Int] = Nil,
     capture: Boolean = false,
     file: Option[Int] = None,

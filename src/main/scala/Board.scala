@@ -56,7 +56,7 @@ case class Board(
 
 
   // Moving and taking have the same logic in tak, we always asume an empty stack
-  def move(orig: Pos, dest: Pos, index: Int = 1): Option[Board] =
+  def move(orig: Pos, dest: Pos, index: Int): Option[Board] =
     if (!(pieces contains orig)) None
     else
       for {

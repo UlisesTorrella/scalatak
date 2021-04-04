@@ -14,7 +14,7 @@ object Binary {
   private object MoveType {
     val SimplePawn  = 0
     val SimplePiece = 1
-    val FullPawn    = 2
+    val Drop        = 2
     val FullPiece   = 3
   }
 
@@ -24,10 +24,12 @@ object Binary {
     val pieceStrs: Map[Int, String]     = pieceInts map { case (k, v) => v -> k }
     val dropPieceInts: Map[String, Int] = Map("F" -> 1, "C" -> 2, "W" -> 3)
     val dropPieceStrs: Map[Int, String] = dropPieceInts map { case (k, v) => v -> k }
-    val promotionInts: Map[String, Int] = Map("" -> 0, "F" -> 1, "C" -> 2, "W" -> 3, "B" -> 4, "K" -> 6)
+    val promotionInts: Map[String, Int] = Map("" -> 0, "F" -> 1, "C" -> 2, "W" -> 3)
     val promotionStrs: Map[Int, String] = promotionInts map { case (k, v) => v -> k }
     val checkInts: Map[String, Int]     = Map("" -> 0, "+" -> 1, "#" -> 2)
     val checkStrs: Map[Int, String]     = checkInts map { case (k, v) => v -> k }
+    val dirInts: Map[String, Int]       = Map(">" -> 0, "<" -> 1, "+" -> 2, "-" -> 3)
+    val dirStrs: Map[Int, String]       = dirInts map { case (k, v) => v -> k }
   }
 
   private object Reader {
@@ -43,14 +45,10 @@ object Binary {
       bs match {
         case _ if pliesToGo <= 0 => Nil
         case Nil                 => Nil
-        case b1 :: rest if moveType(b1) == MoveType.SimplePawn =>
-          simplePawn(b1) :: intMoves(rest, pliesToGo - 1)
-        case b1 :: b2 :: rest if moveType(b1) == MoveType.SimplePiece =>
-          simplePiece(b1, b2) :: intMoves(rest, pliesToGo - 1)
-        case b1 :: b2 :: rest if moveType(b1) == MoveType.FullPawn =>
-          fullPawn(b1, b2) :: intMoves(rest, pliesToGo - 1)
-        case b1 :: b2 :: b3 :: rest if moveType(b1) == MoveType.FullPiece =>
-          fullPiece(b1, b2, b3) :: intMoves(rest, pliesToGo - 1)
+        case b1 :: b2 :: rest if moveType(b1) == MoveType.Drop =>
+          drop(b1, b2) :: intMoves(rest, pliesToGo - 1)
+        case b1 :: b2 :: b3 :: b4 :: b5 :: b6 :: rest if moveType(b1) == MoveType.SimplePiece =>
+          simplePiece(b1, b2, b3, b4, b5, b6) :: intMoves(rest, pliesToGo - 1)
         case x => !!(x map showByte mkString ",")
       }
 
@@ -64,16 +62,17 @@ object Binary {
     // 1 capture
     // 1 drop
     // 1 nothing
-    def simplePiece(b1: Int, b2: Int): String =
-      if (bitAt(b2, 2)) drop(b1, b2)
-      else
-        pieceStrs(b2 >> 5) match {
-          case piece =>
-            val pos     = posString(right(b1, 6))
-            val capture = if (bitAt(b2, 3)) "x" else ""
-            val check   = checkStrs(cut(b2, 5, 3))
-            s"$piece$capture$pos$check"
-        }
+    def simplePiece(b1: Int, b2: Int, b3: Int, b4: Int, b5: Int, b6: Int): String = {
+        val index = (b2 >>> 5)
+        val pos   = posString(right(b1, 6))
+        val check = checkStrs(cut(b2, 5, 3))
+        val dir   = dirStrs(cut(b2, 3, 1))
+        val dropsList = List(b3>>>4, right(b3, 4), b4>>>4, right(b4, 4), b5>>>4, right(b5, 4), b6>>>4, right(b6, 4), 0)
+        val drops = dropsList.splitAt(dropsList.indexOf(0))._1
+                      .mkString("")
+        s"$index$pos$dir$drops$check"
+      }
+
     def drop(b1: Int, b2: Int): String = {
       val piece = dropPieceStrs(b2 >> 5)
       val pos   = posString(right(b1, 6))
@@ -126,53 +125,33 @@ object Binary {
 
     def move(str: String): List[Byte] =
       (str match {
-        case pos if pos.length == 2 => simplePawn(pos)
-        case CastlingR(str, check)  => castling(str, check)
-        case SimplePieceR(piece, capture, pos, check) =>
-          simplePiece(piece, pos, capture, check)
-        case FullPawnR(file, pos, promotion, check) =>
-          fullPawn(Option(file), pos, check, Option(promotion))
-        case FullPieceR(piece, orig, capture, pos, check) =>
-          fullPiece(piece, orig, pos, capture, check)
+        case SimplePieceR(index, pos, dir, drops, check) =>
+          simplePiece(index, pos, dir, drops, check)
         case DropR(role, pos, check) => drop(role, pos, check)
       }) map (_.toByte)
 
     def moves(strs: Iterable[String]): Array[Byte] = strs.flatMap(move).to(Array)
 
-    def simplePawn(pos: String) =
-      List(
-        (MoveType.SimplePawn << 6) + posInt(pos)
-      )
+    def dropAt(i: Int, dropS: String): Int =
+      dropS lift i match {
+        case Some(x) => x.toInt - 48
+        case None    => 0
+      }
 
-    def simplePiece(piece: String, pos: String, capture: String, check: String) =
+    def simplePiece(index: String, pos: String, dir: String, drops: String, check: String) =
       List(
         (MoveType.SimplePiece << 6) + posInt(pos),
-        (pieceInts(piece) << 5) + (checkInts(check) << 3) + (boolInt(capture) << 2)
+        (index.toInt << 5) + (checkInts(check) << 3) + (dirInts(dir) << 1),
+        (dropAt(0, drops) << 4) + (dropAt(1, drops)),
+        (dropAt(2, drops) << 4) + (dropAt(3, drops)),
+        (dropAt(4, drops) << 4) + (dropAt(5, drops)),
+        (dropAt(6, drops) << 4) + (dropAt(7, drops))
       )
 
     def drop(piece: String, pos: String, check: String) =
       List(
-        (MoveType.SimplePiece << 6) + posInt(pos),
+        (MoveType.Drop << 6) + posInt(pos),
         (dropPieceInts(piece) << 5) + (checkInts(check) << 3) + (1 << 1)
-      )
-
-    def castling(str: String, check: String) =
-      List(
-        MoveType.SimplePiece << 6,
-        (pieceInts(str) << 5) + (checkInts(check) << 3)
-      )
-
-    def fullPawn(file: Option[String], pos: String, check: String, promotion: Option[String]) =
-      List(
-        (MoveType.FullPawn << 6) + posInt(pos),
-        (shiftOptionInt(file, pos) << 6) + (checkInts(check) << 4) + (promotionInts(promotion | "") << 1)
-      )
-
-    def fullPiece(piece: String, orig: String, pos: String, capture: String, check: String) =
-      List(
-        (MoveType.FullPiece << 6) + posInt(pos),
-        (pieceInts(piece) << 5) + (checkInts(check) << 3) + (boolInt(capture) << 2),
-        (disambTypeInt(orig) << 6) + disambiguationInt(orig)
       )
 
     def disambTypeInt(orig: String): Int =
@@ -205,8 +184,11 @@ object Binary {
     val captureR     = "(x?)"
     val checkR       = "([\\+#]?)"
     val promotionR   = "(?:\\=?([FCW]))?"
+    val indexR       = "([0-9]?)"
+    val dirR         = "([<>+-])"
+    val dropsR       = """(\d+)"""
     val origR        = "([a-h]?[1-8]?)".r
-    val SimplePieceR = s"^$pieceR$captureR$posR$checkR$$".r
+    val SimplePieceR = s"^$indexR$posR$dirR$dropsR$checkR$$".r
     val FullPawnR    = s"^$fileR$posR$promotionR$checkR$$".r
     val CastlingR    = s"^(O-O|O-O-O)$checkR$$".r
     val FullPieceR   = s"^$pieceR$origR$captureR$posR$checkR$$".r

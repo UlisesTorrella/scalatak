@@ -61,7 +61,7 @@ object Uci {
           dropsS = move drop 3
         } yield Move(orig, Direction(dir), i.toInt - 48, drops(dropsS))
 
-    def fromStrings(origS: String, dir: String, i: Int = 0, dropsS: String = "") =
+    def fromStrings(origS: String, dir: String, i: Int, dropsS: String) =
       for {
         orig <- Pos.fromKey(origS)
       } yield Move(orig, Direction(dir), i, drops(dropsS))

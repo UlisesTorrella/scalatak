@@ -53,11 +53,11 @@ final case class Actor(
       }
       yield
         board.pieces.get(to) match {
-          case None           => board.move(pos, to) map { move(dir, _) }
+          case None           => board.move(pos, to, 1) map { move(dir, _) }
           case Some(stack)    => stack match {
-            case Stack(p, _*) => if (p.role == Flatstone) board.move(pos, to) map { move(dir, _) }
+            case Stack(p, _*) => if (p.role == Flatstone) board.move(pos, to, 1) map { move(dir, _) }
                                  else Nil
-            case Stack() => board.move(pos, to) map { move(dir, _) }
+            case Stack() => board.move(pos, to, 1) map { move(dir, _) }
             case _ => Nil
           }
         }
@@ -79,7 +79,8 @@ final case class Actor(
       after = after,
       capture = capture,
       promotion = promotion,
-      enpassant = enpassant
+      enpassant = enpassant,
+      stackIndex = 1
     )
 
 }

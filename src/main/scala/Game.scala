@@ -17,7 +17,7 @@ case class Game(
   def apply(
       orig: Pos,
       dir: Direction,
-      i: Int = 1,
+      i: Int,
       drops: List[Int] = Nil,
       metrics: MoveMetrics = MoveMetrics()
   ): Validated[String, (Game, Move)] =
