@@ -47,17 +47,12 @@ abstract class Variant private[variant] (
       dir: Direction,
       drops: List[Int]
   ): Validated[String, Move] = {
-
-    // Find the move in the variant specific list of valid moves
-    def findMove(from: Pos, dir: Direction) =
-      situation.moves get from flatMap (_.find(_.dir == dir))
-
     for {
       actor <- situation.board.actors get from toValid "No piece on " + from
       _ <-
         if (actor is situation.color) Validated.valid(actor)
         else Validated.invalid("Not my piece on " + from)
-      m1 <- findMove(from, dir) toValid "Piece on " + from + " cannot move to " + dir
+      m1 <- actor.move(from, dir, index, drops) toValid "Piece on " + from + " cannot move to " + dir
     } yield (m1 withIndex index) withDrops drops
   }
 

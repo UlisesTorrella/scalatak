@@ -2,6 +2,7 @@ package chess
 
 import variant.{ Variant, Standard }
 import scala.collection.mutable.Stack
+import Direction.Direction
 
 case class Board(
     pieces: PieceMap,
@@ -66,6 +67,17 @@ case class Board(
       } yield copy(pieces = pieces - dest - orig
                   + (dest -> (movingPieces ++ dstack) )
                   + (orig -> leftPieces))
+
+  def move(orig: Pos, dir: Direction, index: Int, drops: List[Int]): Option[Board] =
+    if (index==0) Option(this)
+    else drops match {
+      case d :: rest => for {
+                          dest <- Direction(dir, orig)
+                          b    <- move(orig, dest, index)
+                          b2   <- b.move(dest, dir, index-d, rest)
+                        } yield b2
+      case Nil       => Option(this)
+    }
 
   // def taking(orig: Pos, dest: Pos, index: Int = 0): Option[Board] =
   //   for {
