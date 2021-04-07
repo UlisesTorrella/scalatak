@@ -22,8 +22,8 @@ object Uci {
   case class Move(
       orig: Pos,
       dir: Direction,
-      i: Int = 1,
-      drops: List[Int] = List()
+      i: Int,
+      drops: List[Int]
   ) extends Uci {
 
     def keys = i.toString + orig.key + dir.toString + drops.map(_.toString).mkString("")
