@@ -72,13 +72,11 @@ case class Std(
             pos.rank.index + 1
           ) && piece.eyesMovable(pos, dir) =>
         val a = Actor(piece, pos, situation.board)
-        (a trustedMoves).find { m =>
-          m.dir == dir
-        }
+        a.move(pos, dir, index, drops)
       case (m, _) => m
     } match {
       case None       => Validated invalid s"No move found: $this\n$situation"
-      case Some(move) => valid(move)
+      case Some(move) => valid((move withIndex index) withDrops drops)
     }
 
   private def compare[A](a: Option[A], b: A) = a.fold(true)(b ==)

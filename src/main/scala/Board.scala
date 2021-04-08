@@ -47,7 +47,6 @@ case class Board(
   def place(piece: Piece, at: Pos): Option[Board] =
     if (pieces contains at) pieces get at match {
       case Some(Stack()) => Option(copy(pieces = pieces - at + ((at, Stack(piece)))))
-      case None          => Option(copy(pieces = pieces + ((at, Stack(piece)))))
       case _             => None
     }
     else Option(copy(pieces = pieces + ((at, Stack(piece)))))

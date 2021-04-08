@@ -15,8 +15,8 @@ case class Move(
     promotion: Option[PromotableRole],
     enpassant: Boolean,
     metrics: MoveMetrics = MoveMetrics(),
-    stackIndex: Int, // by default at top
-    drops: List[Int] = List(1) // empty drop list will be considered as "all stones dropped in the first square"
+    stackIndex: Int,
+    drops: List[Int] 
 ) {
   def before = situationBefore.board
 
