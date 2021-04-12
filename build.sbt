@@ -1,8 +1,8 @@
-name := "scalachess"
+name := "scalatak"
 
-organization := "org.lichess"
+organization := "org.litak"
 
-version := "10.2.1"
+version := "0.1"
 
 scalaVersion := "2.13.5"
 
