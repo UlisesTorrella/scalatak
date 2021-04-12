@@ -93,10 +93,7 @@ object Replay {
       .moves(moveStrs, variant)
       .fold(
         err => List.empty[(Game, Uci.WithSan)] -> err.some,
-        moves => {
-          println(s"moves are: $moves")
-          mk(init, moves.value zip moveStrs)
-        }
+        moves => mk(init, moves.value zip moveStrs)
       ) match {
       case (games, err) => (init, games, err)
     }
