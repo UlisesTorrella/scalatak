@@ -15,6 +15,8 @@ case class Piece(color: Color, role: Role) {
 
   def forsyth: Char = if (color == White) role.forsythUpper else role.forsyth
 
+  def flatten = copy(role=Flatstone)
+
   // attackable positions assuming empty board
   def eyes(from: Pos, to: Pos): Boolean =
     role match {

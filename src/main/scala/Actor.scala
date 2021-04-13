@@ -29,7 +29,7 @@ final case class Actor(
       case Queen => shortRange(Queen.dirs)
 
       case King               => shortRange(King.dirs)
-      case Capstone           => shortRange(Flatstone.dirs)
+      case Capstone           => capstoneRange(Flatstone.dirs)
       case Flatstone          => shortRange(Flatstone.dirs)
       case Wallstone          => shortRange(Flatstone.dirs)
     }
@@ -45,6 +45,24 @@ final case class Actor(
   def is(c: Color) = c == piece.color
   def is(r: Role)  = r == piece.role
   def is(p: Piece) = p == piece
+
+
+  private def capstoneRange(dirs: List[Direction]): List[Move] =
+    dirs flatMap { dir => //_(pos) } flatMap { to =>
+      for {
+        to <- Direction(dir, pos)
+      }
+      yield
+        board.pieces.get(to) match {
+          case None           => board.move(pos, to, 1) map { move(dir, _, 1, List(1)) }
+          case Some(stack)    => stack match {
+            case Stack(p, _*) => if (p.role != Capstone) board.move(pos, to, 1) map { move(dir, _, 1, List(1)) }
+                                 else Nil
+            case Stack()      => board.move(pos, to, 1) map { move(dir, _, 1, List(1)) }
+            case _            => Nil
+          }
+        }
+    } flatten
 
   private def shortRange(dirs: List[Direction]): List[Move] =
     dirs flatMap { dir => //_(pos) } flatMap { to =>

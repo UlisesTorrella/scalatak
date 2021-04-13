@@ -93,4 +93,23 @@ class GameTest extends Specification {
     }
   }
 
+  "capstone over Wallstone " should {
+    val wc = Piece(Color.White, Capstone)
+    val bw = Piece(Color.Black, Wallstone)
+    val game = Game(Board(Map(Pos.E5 -> Stack(wc), Pos.D5 -> Stack(bw)), variant.Standard))
+
+    val gameStack = for {
+      move1 <- game.situation.move(1, Pos.E5, Direction.Left, List(1))
+      u2 = println(s"Turn of ${game.situation.color} $move1")
+    } yield game(move1)
+
+    val b = (for {
+      g <- gameStack
+    } yield g.situation.board) getOrElse (Board(Map(), chess.variant.Standard))
+
+    "have cap over flat" in {
+      (b.pieces.get(Pos.D5) getOrElse Stack()).top is Capstone
+      (b.pieces.get(Pos.D5) getOrElse Stack())(1) is Flatstone
+    }
+  }
 }
