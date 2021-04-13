@@ -2,7 +2,7 @@ name := "scalatak"
 
 organization := "org.litak"
 
-version := "0.1"
+version := "0.1.3"
 
 scalaVersion := "2.13.5"
 

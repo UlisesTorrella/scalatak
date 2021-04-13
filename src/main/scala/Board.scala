@@ -55,16 +55,19 @@ case class Board(
     if (pieces contains at) Option(copy(pieces = pieces - at))
     else None
 
-  def flattenWalls(moving: Stack[Piece], dest: Stack[Piece]): Stack[Piece] =
+  def flattenWalls(moving: Stack[Piece], dest: Stack[Piece]): Option[Stack[Piece]] =
     moving match {
       case Stack(p) if p is Capstone => dest match {
         case Stack(w, _*) if w is Wallstone => {
           dest.pop
-          dest.push(w.flatten)
+          Option(dest.push(w.flatten))
         }
-        case _ => dest
+        case _ => Option(dest)
       }
-      case _ => dest
+      case _ => dest match {
+        case Stack(w, _*) if w is Wallstone => None
+        case _ => Option(dest)
+      }
     }
 
 
@@ -74,8 +77,8 @@ case class Board(
     else
       for {
         stack  <- pieces get orig
-        dstack = flattenWalls(stack, pieces.getOrElse(dest, Stack[Piece]()))
         (movingPieces, leftPieces) = stack splitAt index
+        dstack <- flattenWalls(movingPieces, pieces.getOrElse(dest, Stack[Piece]()))
       } yield copy(pieces = pieces - dest - orig
                   + (dest -> (movingPieces ++ dstack) )
                   + (orig -> leftPieces))
