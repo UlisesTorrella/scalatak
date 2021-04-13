@@ -1,10 +1,13 @@
-import chess._
+package chess
+
+
+import org.specs2.mutable.Specification
 import scala.collection.mutable.Stack
 import cats.data.Validated.Valid
 
-object gameTest {
+class GameTest extends Specification {
 
-  def test1 = {
+  "simple drop and move " should {
     val game = Game(variant.Crazyhouse)
 
     val piece1 = Piece(Color.White, Flatstone)
@@ -25,15 +28,20 @@ object gameTest {
       u2 = println(s"Turn of ${g3.situation.color} $move1")
     } yield g3(move1)
 
-    for {
+    val b = (for {
       g <- gameStack
-    } yield g.situation.board
+    } yield g.situation.board) getOrElse (Board(Map(), chess.variant.Standard))
+
+    "have pieces in" in {
+      b.pieces.get(Pos.E5).nonEmpty
+      b.pieces.get(Pos.A1).nonEmpty
+      b.pieces.get(Pos.D5).nonEmpty
+    }
   }
 
-  def test2 = {
+  "simple long drop" should {
     val game = Game(variant.Crazyhouse)
 
-    val piece1 = Piece(Color.White, Flatstone)
     val gameStack = for {
       drop <- variant.Crazyhouse.drop(game.situation, Flatstone, Pos.E4)
       g = game.applyDrop(drop)
@@ -51,28 +59,38 @@ object gameTest {
       u2 = println(s"Turn of ${g3.situation.color} $move1")
     } yield g3(move1)
 
-    for {
+    val b = (for {
       g <- gameStack
-    } yield g.situation.board
+    } yield g.situation.board) getOrElse (Board(Map(), chess.variant.Standard))
+
+
+    "have pieces in" in {
+      b.pieces.get(Pos.D5).nonEmpty
+      b.pieces.get(Pos.C5).nonEmpty
+      b.pieces.get(Pos.E6).nonEmpty
+    }
   }
 
-  def test3 = {
+  "long drop 3 1 1" should {
     val wp = Piece(Color.White, Flatstone)
     val bp = Piece(Color.Black, Flatstone)
     val game = Game(Board(Map(Pos.E5 -> Stack(wp,bp,wp,bp,wp,bp,wp,bp)), variant.Standard))
 
-    val piece1 = Piece(Color.White, Flatstone)
     val gameStack = for {
       move1 <- game.situation.move(5, Pos.E5, Direction.Left, List(3,1,1))
       u2 = println(s"Turn of ${game.situation.color} $move1")
     } yield game(move1)
 
-    for {
+    val b = (for {
       g <- gameStack
-    } yield g.situation.board
+    } yield g.situation.board) getOrElse (Board(Map(), chess.variant.Standard))
+
+    "have pieces in" in {
+      b.pieces.get(Pos.E5).nonEmpty
+      b.pieces.get(Pos.D5).size == 3
+      b.pieces.get(Pos.C5).nonEmpty
+      b.pieces.get(Pos.B5).nonEmpty
+    }
   }
-
-
-  val a = test3 getOrElse (Board(Map(), chess.variant.Standard))
 
 }
